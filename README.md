@@ -5,7 +5,7 @@
 ![Pandas](https://img.shields.io/badge/Pandas-2.0-green?logo=pandas&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-A machine learning project that detects **counterfeit (fake) banknotes** from genuine ones using **Logistic Regression**. The model is trained on features extracted from Wavelet Transformed images of banknotes, achieving high accuracy in classifying currency as real or fake.
+A machine learning project that detects **counterfeit (fake) banknotes** from genuine ones using **Logistic Regression**. The model is trained on four pre-extracted numerical features from the UCI Banknote Authentication dataset, achieving 97.09% accuracy on the fixed 80/20 test split.
 
 ---
 
@@ -28,7 +28,7 @@ A machine learning project that detects **counterfeit (fake) banknotes** from ge
 
 ## 🎯 Problem Statement
 
-Counterfeit currency is a significant problem that affects economies worldwide. Manual detection is time-consuming and error-prone. This project applies **Logistic Regression**, a supervised machine learning algorithm, to automatically classify banknotes as **genuine (0)** or **forged (1)** based on mathematical features extracted from their images.
+Counterfeit currency is a significant problem that affects economies worldwide. Manual detection is time-consuming and error-prone. This project applies **Logistic Regression**, a supervised machine learning algorithm, to automatically classify banknotes as **genuine (0)** or **forged (1)** based on four pre-extracted numerical features from the UCI Banknote Authentication dataset.
 
 ---
 
@@ -46,14 +46,14 @@ We use the **Banknote Authentication Dataset** from the [UCI Machine Learning Re
 
 ### Features Description
 
-The features were extracted using **Wavelet Transform** on banknote images:
+The dataset contains four numerical features from the [UCI Banknote Authentication](https://archive.ics.uci.edu/ml/datasets/banknote+authentication) dataset. These features were pre-extracted from Wavelet Transformed images of banknotes and include:
 
 | # | Feature | Description |
 |---|---|---|
-| 1 | **Variance** | Variance of the Wavelet Transformed image — measures how spread out pixel values are |
-| 2 | **Skewness** | Skewness of the Wavelet Transformed image — measures the asymmetry of the pixel distribution |
-| 3 | **Kurtosis** | Kurtosis of the Wavelet Transformed image — measures the "tailedness" of the pixel distribution |
-| 4 | **Entropy** | Entropy of the image — measures the randomness/disorder in the pixel values |
+| 1 | **Variance** | Variance of the Wavelet Transformed image |
+| 2 | **Skewness** | Skewness of the Wavelet Transformed image |
+| 3 | **Kurtosis** | Kurtosis of the Wavelet Transformed image |
+| 4 | **Entropy** | Entropy of the image |
 
 ---
 
@@ -135,10 +135,8 @@ fake-currency-detection/
 ├── data/
 │   └── banknote_authentication.csv    # Dataset file
 │
-├── notebooks/
-│   └── currency_detection.ipynb       # Jupyter Notebook with full analysis
-│
 ├── src/
+│   ├── download_data.py               # Dataset download script
 │   ├── data_preprocessing.py          # Data loading and preprocessing
 │   ├── model.py                       # Logistic Regression model training
 │   ├── evaluate.py                    # Model evaluation and metrics
@@ -152,7 +150,7 @@ fake-currency-detection/
 │
 ├── requirements.txt                   # Python dependencies
 ├── README.md                          # Project documentation (this file)
-└── LICENSE                            # MIT License
+└── LICENSE.md                         # MIT License
 ```
 
 ---
@@ -187,20 +185,13 @@ pandas>=2.0.0
 scikit-learn>=1.3.0
 matplotlib>=3.7.0
 seaborn>=0.12.0
-jupyter>=1.0.0
+joblib>=1.4.0
 ```
 
 ---
-
 ## 🚀 Usage
 
-### Option 1: Run the Jupyter Notebook
-
-```bash
-jupyter notebook notebooks/currency_detection.ipynb
-```
-
-### Option 2: Run from Command Line
+### Option 1: Run from Command Line
 
 ```bash
 # Train and evaluate the model
@@ -231,11 +222,19 @@ print(f"Prediction: {result}")
 
 | Metric | Score |
 |---|---|
-| **Accuracy** | ~98.5% |
-| **Precision** | ~98.2% |
-| **Recall** | ~98.8% |
-| **F1-Score** | ~98.5% |
-| **ROC-AUC** | ~0.99 |
+| **Accuracy** | 97.09% |
+| **Precision** | 93.85% |
+| **Recall** | 100.00% |
+| **F1-Score** | 96.83% |
+| **ROC-AUC** | 0.9999 |
+
+### Evaluation Protocol
+
+- 80/20 stratified train-test split with `random_state=42`
+- StandardScaler fitted on training data only, then applied to test data
+- Logistic Regression with `solver=lbfgs`, `C=1.0`, `max_iter=1000`
+
+> Note: These results are based on the fixed 80/20 test split and do not generalize beyond this specific evaluation.
 
 ### Confusion Matrix
 
@@ -243,20 +242,20 @@ print(f"Prediction: {result}")
                  Predicted
               |  Genuine  |  Forged  |
   -----------+-----------+----------+
-  Genuine    |    150    |     2    |   (True Negatives / False Positives)
+  Genuine    |    145    |     8    |   (True Negatives / False Positives)
   -----------+-----------+----------+
-  Forged     |     2     |    121   |   (False Negatives / True Positives)
+  Forged     |     0     |    122   |   (False Negatives / True Positives)
   -----------+-----------+----------+
 ```
 
-> **Interpretation**: Out of 275 test samples, the model correctly classified 271, misclassifying only 4 banknotes.
+> **Interpretation**: Out of 275 test samples, the model correctly classified 267, misclassifying 8 banknotes.
 
 ### Key Findings
 
-- **Variance** and **Skewness** are the most significant features for detection
-- Forged notes tend to have **lower variance** and **higher skewness** values
-- The model achieves near-perfect separation with just 4 features
-- Logistic Regression performs exceptionally well due to the **linear separability** of the data
+- Variance, Skewness, and Kurtosis have substantially larger absolute Logistic Regression coefficients than Entropy in the fitted baseline model.
+- The baseline Logistic Regression model assigns negative coefficients to variance, skewness, and kurtosis and a small positive coefficient to entropy.
+- The model achieves strong performance with just 4 features
+- Logistic Regression achieves strong performance on the fixed 80/20 test split, while the current evaluation does not establish linear separability
 
 ---
 
@@ -266,11 +265,10 @@ The project generates the following visualizations:
 
 | Visualization | Purpose |
 |---|---|
-| **Feature Distribution** | Box plots and histograms showing how each feature varies between genuine and forged notes |
+| **Feature Distribution** | Histograms showing how each feature varies between genuine and forged notes |
 | **Correlation Heatmap** | Shows relationships between features |
 | **Confusion Matrix** | Visual breakdown of prediction results |
 | **ROC Curve** | Illustrates the trade-off between true positive rate and false positive rate |
-| **Decision Boundary** | 2D projection showing how the model separates the two classes |
 
 ---
 
@@ -284,7 +282,7 @@ The project generates the following visualizations:
 | **Scikit-Learn** | Logistic Regression model, preprocessing, and metrics |
 | **Matplotlib** | Static data visualizations |
 | **Seaborn** | Statistical visualizations and heatmaps |
-| **Jupyter Notebook** | Interactive development and documentation |
+| **UCI Banknote Authentication Dataset** | Source of the four pre‑extracted numerical features |
 
 ---
 
